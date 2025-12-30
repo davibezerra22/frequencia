@@ -5,6 +5,54 @@ require_once __DIR__ . '/../../src/Database/Connection.php';
 use App\Database\Connection;
 $pdo = Connection::get();
 $msg = '';
+$processFoto = function(int $aluno_id) use ($pdo) {
+  if (!isset($_FILES['foto_file']) || ($_FILES['foto_file']['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) return;
+  $f = $_FILES['foto_file'];
+  $mime = (function($path,$fallback){
+    if (function_exists('finfo_open')) {
+      $fi = @finfo_open(FILEINFO_MIME_TYPE);
+      if ($fi) { $t = @finfo_file($fi, $path); @finfo_close($fi); if ($t) return $t; }
+    }
+    if (function_exists('exif_imagetype')) {
+      $map = [IMAGETYPE_PNG=>'image/png',IMAGETYPE_JPEG=>'image/jpeg',IMAGETYPE_WEBP=>'image/webp'];
+      $t = @exif_imagetype($path); if ($t && isset($map[$t])) return $map[$t];
+    }
+    return $fallback ?: 'application/octet-stream';
+  })($f['tmp_name'], $f['type'] ?? '');
+  $ok = in_array($mime, ['image/png','image/jpeg','image/webp'], true);
+  if (!$ok) return;
+  $dir = realpath(__DIR__ . '/../uploads') ?: __DIR__ . '/../uploads';
+  $photosDir = $dir . '/alunos';
+  if (!is_dir($photosDir)) { @mkdir($photosDir, 0775, true); }
+  $name = 'aluno_'.$aluno_id.'_'.substr(sha1_file($f['tmp_name']),0,12);
+  $webPath = '/uploads/alunos/'.$name.'.webp';
+  $dest = $photosDir.'/'.$name.'.webp';
+  $converted = false;
+  if (function_exists('imagecreatefromstring') && function_exists('imagewebp')) {
+    $img = @imagecreatefromstring(file_get_contents($f['tmp_name']));
+    if ($img) {
+      $w = imagesx($img); $h = imagesy($img);
+      $maxW = 256;
+      if ($w > $maxW) {
+        $nw = $maxW; $nh = (int)round($h * ($maxW / $w));
+        $res = imagecreatetruecolor($nw, $nh);
+        imagealphablending($res, false); imagesavealpha($res, true);
+        imagecopyresampled($res, $img, 0,0,0,0, $nw,$nh, $w,$h);
+        $img = $res;
+      }
+      if (@imagewebp($img, $dest, 80)) { $converted = true; }
+      imagedestroy($img);
+    }
+  }
+  if (!$converted) {
+    $ext = $mime === 'image/png' ? '.png' : ($mime === 'image/jpeg' ? '.jpg' : '.webp');
+    $webPath = '/uploads/alunos/'.$name.$ext;
+    $dest = $photosDir.'/'.$name.$ext;
+    @move_uploaded_file($f['tmp_name'], $dest);
+  }
+  $upd = $pdo->prepare('UPDATE alunos SET foto_aluno=? WHERE id=?');
+  try { $upd->execute([$webPath, $aluno_id]); } catch (\Throwable $e) {}
+};
 $session_escola = $_SESSION['escola_id'] ?? null;
 $view_escola = $session_escola ?: (int)($_GET['escola'] ?? 0) ?: null;
 $schools = [];
@@ -33,14 +81,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($nome !== '' && $matricula !== '') {
       $qrcode = sha1($matricula);
       $s = $pdo->prepare('INSERT INTO alunos (nome, matricula, foto_aluno, qrcode_hash, escola_id) VALUES (?, ?, ?, ?, ?)');
-      try { $s->execute([$nome, $matricula, $foto ?: null, $qrcode, $session_escola]); $msg = 'Aluno cadastrado'; } catch (\Throwable $e) { $msg = 'Erro ao cadastrar aluno'; }
+      try { 
+        $s->execute([$nome, $matricula, $foto ?: null, $qrcode, $session_escola]); 
+        $aluno_id = (int)$pdo->lastInsertId();
+        $processFoto($aluno_id);
+        $msg = 'Aluno cadastrado'; 
+      } catch (\Throwable $e) { $msg = 'Erro ao cadastrar aluno'; }
     } else { $msg = 'Preencha nome e matrícula'; }
   } elseif ($act === 'update_aluno') {
     $id = (int)($_POST['id'] ?? 0);
     $nome = trim($_POST['nome'] ?? '');
     $foto = trim($_POST['foto'] ?? '');
     $s = $pdo->prepare('UPDATE alunos SET nome=?, foto_aluno=? WHERE id=?');
-    try { $s->execute([$nome, $foto ?: null, $id]); $msg = 'Aluno atualizado'; } catch (\Throwable $e) { $msg = 'Erro ao atualizar aluno'; }
+    try { 
+      $s->execute([$nome, $foto ?: null, $id]); 
+      $processFoto($id);
+      $msg = 'Aluno atualizado'; 
+    } catch (\Throwable $e) { $msg = 'Erro ao atualizar aluno'; }
   } elseif ($act === 'delete_aluno') {
     $id = (int)($_POST['id'] ?? 0);
     try {
@@ -53,6 +110,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $turma_id = (int)($_POST['turma_id'] ?? 0);
     $s = $pdo->prepare('INSERT IGNORE INTO matriculas_turma (aluno_id, turma_id) VALUES (?, ?)');
     try { $s->execute([$aluno_id, $turma_id]); $msg = 'Aluno enturmado'; } catch (\Throwable $e) { $msg = 'Erro ao enturmar'; }
+  } elseif ($act === 'upload_foto') {
+    $id = (int)($_POST['id'] ?? 0);
+    $processFoto($id);
+    $msg = 'Foto atualizada';
   }
 }
 $page = max(1, (int)($_GET['p'] ?? 1));
@@ -131,18 +192,25 @@ $alunos = $stmt->fetchAll();
         <button type="submit">Filtrar</button>
       </form>
       <table>
-        <thead><tr><th>Aluno</th><th>Matrícula</th><th>Foto</th><th>Turmas</th></tr></thead>
+        <thead><tr><th>Aluno</th><th>Matrícula</th><th>Foto</th><th>Turmas</th><th>Atualizar Foto</th></tr></thead>
         <tbody>
           <?php foreach ($alunos as $a){ ?>
             <tr>
               <td><?php echo htmlspecialchars($a['nome']); ?></td>
               <td><?php echo htmlspecialchars($a['matricula']); ?></td>
-              <td><?php echo htmlspecialchars((string)$a['foto_aluno']); ?></td>
+              <td><?php echo $a['foto_aluno'] ? '<img src="'.htmlspecialchars((string)$a['foto_aluno']).'" alt="" style="height:32px;border-radius:6px">' : ''; ?></td>
               <td><?php echo htmlspecialchars((string)$a['turmas']); ?></td>
+              <td>
+                <form method="post" enctype="multipart/form-data" class="row">
+                  <input type="hidden" name="id" value="<?php echo $a['id']; ?>">
+                  <input type="file" name="foto_file" accept="image/*">
+                  <button name="act" value="upload_foto">Enviar</button>
+                </form>
+              </td>
             </tr>
           <?php } ?>
           <?php if (!$alunos){ ?>
-            <tr><td colspan="4" class="muted">Nenhum aluno encontrado.</td></tr>
+            <tr><td colspan="5" class="muted">Nenhum aluno encontrado.</td></tr>
           <?php } ?>
         </tbody>
       </table>
@@ -164,10 +232,11 @@ $alunos = $stmt->fetchAll();
           <button class="tab" data-tab="tab-enturmar">Enturmar</button>
         </div>
         <div id="tab-cad">
-          <form method="post" class="row">
+          <form method="post" enctype="multipart/form-data" class="row">
             <input name="nome" placeholder="Nome" required>
             <input name="matricula" placeholder="Matrícula" required>
             <input name="foto" placeholder="URL da Foto (opcional)">
+            <input type="file" name="foto_file" accept="image/*">
             <button name="act" value="create_aluno">Cadastrar</button>
           </form>
         </div>
@@ -187,6 +256,15 @@ $alunos = $stmt->fetchAll();
                       <button name="act" value="delete_aluno" onclick="return confirm('Excluir aluno?')">Excluir</button>
                     </td>
                   </form>
+                </tr>
+                <tr>
+                  <td colspan="4">
+                    <form method="post" enctype="multipart/form-data" class="row">
+                      <input type="hidden" name="id" value="<?php echo $a['id']; ?>">
+                      <input type="file" name="foto_file" accept="image/*">
+                      <button name="act" value="upload_foto">Upload Foto</button>
+                    </form>
+                  </td>
                 </tr>
               <?php } ?>
               <?php if (!$alunos){ ?>

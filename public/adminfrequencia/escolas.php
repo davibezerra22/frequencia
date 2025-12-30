@@ -9,6 +9,55 @@ $is_super = (!isset($_SESSION['escola_id']) || $_SESSION['escola_id'] === null) 
 if (!$is_super) { header('Location: /adminfrequencia/dashboard.php'); exit; }
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   $act = $_POST['act'] ?? '';
+  $processLogo = function(int $eid) use ($pdo) {
+    if (!isset($_FILES['logo']) || ($_FILES['logo']['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) return;
+    $f = $_FILES['logo'];
+    $mime = (function($path,$fallback){
+      if (function_exists('finfo_open')) {
+        $fi = @finfo_open(FILEINFO_MIME_TYPE);
+        if ($fi) { $t = @finfo_file($fi, $path); @finfo_close($fi); if ($t) return $t; }
+      }
+      if (function_exists('exif_imagetype')) {
+        $map = [IMAGETYPE_PNG=>'image/png',IMAGETYPE_JPEG=>'image/jpeg',IMAGETYPE_WEBP=>'image/webp'];
+        $t = @exif_imagetype($path); if ($t && isset($map[$t])) return $map[$t];
+      }
+      return $fallback ?: 'application/octet-stream';
+    })($f['tmp_name'], $f['type'] ?? '');
+    $ok = in_array($mime, ['image/png','image/jpeg','image/webp'], true);
+    if (!$ok) return;
+    $dir = realpath(__DIR__ . '/../uploads') ?: __DIR__ . '/../uploads';
+    $logosDir = $dir . '/logos';
+    if (!is_dir($logosDir)) { @mkdir($logosDir, 0775, true); }
+    $name = 'school_'.$eid.'_'.substr(sha1_file($f['tmp_name']),0,12);
+    $webPath = '/uploads/logos/'.$name.'.webp';
+    $dest = $logosDir.'/'.$name.'.webp';
+    $converted = false;
+    if (function_exists('imagecreatefromstring') && function_exists('imagewebp')) {
+      $img = @imagecreatefromstring(file_get_contents($f['tmp_name']));
+      if ($img) {
+        $w = imagesx($img); $h = imagesy($img);
+        $maxW = 256;
+        if ($w > $maxW) {
+          $nw = $maxW; $nh = (int)round($h * ($maxW / $w));
+          $res = imagecreatetruecolor($nw, $nh);
+          imagealphablending($res, false); imagesavealpha($res, true);
+          imagecopyresampled($res, $img, 0,0,0,0, $nw,$nh, $w,$h);
+          $img = $res;
+        }
+        if (@imagewebp($img, $dest, 80)) { $converted = true; }
+        imagedestroy($img);
+      }
+    }
+    if (!$converted) {
+      // fallback: move original with sanitized extension
+      $ext = $mime === 'image/png' ? '.png' : ($mime === 'image/jpeg' ? '.jpg' : '.webp');
+      $webPath = '/uploads/logos/'.$name.$ext;
+      $dest = $logosDir.'/'.$name.$ext;
+      @move_uploaded_file($f['tmp_name'], $dest);
+    }
+    $upd = $pdo->prepare('UPDATE escolas SET logotipo=? WHERE id=?');
+    try { $upd->execute([$webPath, $eid]); } catch (\Throwable $e) {}
+  };
   if ($act === 'create_school') {
     $nome = trim($_POST['nome'] ?? '');
     $logo = trim($_POST['logotipo'] ?? '');
@@ -27,6 +76,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $insU = $pdo->prepare('INSERT INTO usuarios (nome, usuario, email, senha_hash, role, status, escola_id) VALUES (?, ?, ?, ?, ?, ?, ?)');
         try { $insU->execute([$admin_nome, $admin_usuario, $admin_email ?: null, $hash, 'admin', 'ativo', $eid_new]); } catch (\Throwable $e) {}
       }
+      // upload de logo opcional
+      $processLogo($eid_new);
       $msg = 'Escola criada';
     } catch (\Throwable $e) { $msg = 'Erro ao criar escola'; }
   } elseif ($act === 'update_school') {
@@ -36,7 +87,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $slug = trim($_POST['slug'] ?? '');
     $status = $_POST['status'] ?? 'ativo';
     $s = $pdo->prepare('UPDATE escolas SET nome=?, logotipo=?, slug=?, status=? WHERE id=?');
-    try { $s->execute([$nome, $logo ?: null, $slug ?: null, $status, $id]); $msg = 'Escola atualizada'; } catch (\Throwable $e) { $msg = 'Erro ao atualizar escola'; }
+    try { $s->execute([$nome, $logo ?: null, $slug ?: null, $status, $id]); $processLogo($id); $msg = 'Escola atualizada'; } catch (\Throwable $e) { $msg = 'Erro ao atualizar escola'; }
   }
 }
 $escolas = $pdo->query('SELECT id, nome, logotipo, slug, status FROM escolas ORDER BY nome')->fetchAll();
@@ -62,9 +113,9 @@ $escolas = $pdo->query('SELECT id, nome, logotipo, slug, status FROM escolas ORD
         <div class="modal">
           <div class="hd"><div>Nova Escola</div><button class="btn-secondary" type="button" onclick="closeSchool()">Fechar</button></div>
           <div class="bd">
-            <form method="post" class="row">
+            <form method="post" enctype="multipart/form-data" class="row">
               <input name="nome" placeholder="Nome da Escola" required>
-              <input name="logotipo" placeholder="URL do Logotipo (opcional)">
+              <input type="file" name="logo" accept="image/*">
               <input name="slug" placeholder="Slug (opcional)">
               <input name="admin_nome" placeholder="Nome do Admin" required>
               <input name="admin_usuario" placeholder="Login do Admin" required>
@@ -83,7 +134,7 @@ $escolas = $pdo->query('SELECT id, nome, logotipo, slug, status FROM escolas ORD
         <tbody>
           <?php foreach ($escolas as $e){ ?>
             <tr>
-              <form method="post" class="row" style="gap:8px">
+              <form method="post" enctype="multipart/form-data" class="row" style="gap:8px">
                 <td><?php if ($e['logotipo']){ ?><img src="<?php echo htmlspecialchars($e['logotipo']); ?>" alt="" style="height:28px"><?php } ?></td>
                 <td><input name="nome" value="<?php echo htmlspecialchars($e['nome']); ?>"></td>
                 <td><input name="slug" value="<?php echo htmlspecialchars((string)$e['slug']); ?>"></td>
@@ -96,6 +147,7 @@ $escolas = $pdo->query('SELECT id, nome, logotipo, slug, status FROM escolas ORD
                 <td style="white-space:nowrap;display:flex;gap:8px">
                   <input type="hidden" name="id" value="<?php echo $e['id']; ?>">
                   <input name="logotipo" value="<?php echo htmlspecialchars((string)$e['logotipo']); ?>" placeholder="Logo URL">
+                  <input type="file" name="logo" accept="image/*">
                   <button name="act" value="update_school">Salvar</button>
                 </td>
               </form>

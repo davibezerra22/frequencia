@@ -4,6 +4,7 @@
 
 # Dados locais
 .mysql/
+public/uploads/
 
 # Logs
 *.log
