@@ -1,0 +1,23 @@
+# Ambiente
+.env
+.trae/
+
+# Dados locais
+.mysql/
+
+# Logs
+*.log
+logs/
+
+# IDE/Editor
+.vscode/
+.idea/
+
+# Dependências (se usadas futuramente)
+vendor/
+node_modules/
+
+# Arquivos temporários
+*.tmp
+*.swp
+*.DS_Store
