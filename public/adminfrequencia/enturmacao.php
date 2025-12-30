@@ -62,13 +62,36 @@ if ($tid > 0) {
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Admin • Enturmação</title>
   <link rel="stylesheet" href="/adminfrequencia/admin.css">
+  <?php $theme = $_GET['theme'] ?? ''; if ($theme==='light'){ ?>
+    <link rel="stylesheet" href="/adminfrequencia/light.css">
+  <?php } ?>
 </head>
 <body>
-  <div class="top"><div>Admin • Enturmação</div><div class="muted"><?php echo htmlspecialchars($msg); ?></div></div>
+  <?php if (($theme ?? '')==='light'){ ?>
+    <div class="header branded">
+      <div class="row">
+        <div class="brand-block">
+          <?php $logo = $_SESSION['escola_logo'] ?? ''; $nome = $_SESSION['escola_nome'] ?? 'Escola'; $user = $_SESSION['user_name'] ?? 'Usuário'; ?>
+          <img src="<?php echo $logo ?: 'https://via.placeholder.com/56x56.png?text=E'; ?>" alt="">
+          <div>
+            <div class="brand">Enturmação • <?php echo htmlspecialchars($nome); ?></div>
+            <div class="user">Usuário: <?php echo htmlspecialchars($user); ?></div>
+          </div>
+        </div>
+        <span class="badge ok"><?php echo htmlspecialchars($msg); ?></span>
+      </div>
+      <div class="row"><a class="btn-secondary" href="?<?php echo $view_escola? 'escola='.$view_escola:''; ?>">Tema escuro</a></div>
+    </div>
+  <?php } else { ?>
+    <div class="top"><div>Admin • Enturmação</div><div class="muted"><?php echo htmlspecialchars($msg); ?></div></div>
+  <?php } ?>
   <div class="layout">
     <?php require __DIR__ . '/_sidebar.php'; ?>
     <div class="content">
       <h2 class="title">Selecionar Turma</h2>
+      <?php if (($theme ?? '')!=='light'){ ?>
+        <div class="row" style="margin:10px 0"><a class="btn" href="?<?php echo $view_escola? 'escola='.$view_escola.'&':''; ?>theme=light">Preview tema claro</a></div>
+      <?php } ?>
       <?php if ($session_escola===null){ ?>
         <form method="get" class="row" style="gap:8px">
           <select name="escola">

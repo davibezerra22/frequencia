@@ -73,6 +73,9 @@ foreach ($anos as $a) {
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Admin • Períodos Letivos</title>
   <link rel="stylesheet" href="/adminfrequencia/admin.css">
+  <?php $theme = $_GET['theme'] ?? ''; if ($theme==='light'){ ?>
+    <link rel="stylesheet" href="/adminfrequencia/light.css">
+  <?php } ?>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
   <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/pt.js"></script>
@@ -80,7 +83,24 @@ foreach ($anos as $a) {
   <script src="/adminfrequencia/modal.js"></script>
 </head>
 <body>
-  <div class="top"><div>Admin • Períodos Letivos</div><div class="muted"><?php echo htmlspecialchars($msg); ?></div></div>
+  <?php if (($theme ?? '')==='light'){ ?>
+    <div class="header branded">
+      <div class="row">
+        <div class="brand-block">
+          <?php $logo = $_SESSION['escola_logo'] ?? ''; $nome = $_SESSION['escola_nome'] ?? 'Escola'; $user = $_SESSION['user_name'] ?? 'Usuário'; ?>
+          <img src="<?php echo $logo ?: 'https://via.placeholder.com/56x56.png?text=E'; ?>" alt="">
+          <div>
+            <div class="brand">Períodos • <?php echo htmlspecialchars($nome); ?></div>
+            <div class="user">Usuário: <?php echo htmlspecialchars($user); ?></div>
+          </div>
+        </div>
+        <span class="badge ok"><?php echo htmlspecialchars($msg); ?></span>
+      </div>
+      <div class="row"><a class="btn-secondary" href="?<?php echo $view_escola? 'escola='.$view_escola:''; ?>">Tema escuro</a></div>
+    </div>
+  <?php } else { ?>
+    <div class="top"><div>Admin • Períodos Letivos</div><div class="muted"><?php echo htmlspecialchars($msg); ?></div></div>
+  <?php } ?>
   <div class="layout">
     <?php require __DIR__ . '/_sidebar.php'; ?>
     <div class="content">
@@ -101,6 +121,9 @@ foreach ($anos as $a) {
           <button class="btn-secondary" type="button" onclick="openConfig()">Configurar Ano</button>
         </div>
       </div>
+      <?php if (($theme ?? '')!=='light'){ ?>
+        <div class="row" style="margin:10px 0"><a class="btn" href="?<?php echo $view_escola? 'escola='.$view_escola.'&':''; ?>theme=light">Preview tema claro</a></div>
+      <?php } ?>
       <div class="modal-backdrop" id="modalConfig">
         <div class="modal">
           <div class="hd"><div>Configuração de Ano Letivo</div><button class="btn-secondary" type="button" onclick="closeConfig()">Fechar</button></div>

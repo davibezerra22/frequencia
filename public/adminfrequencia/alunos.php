@@ -153,9 +153,31 @@ $alunos = $stmt->fetchAll();
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Admin • Alunos</title>
   <link rel="stylesheet" href="/adminfrequencia/admin.css">
+  <?php $theme = $_GET['theme'] ?? ''; if ($theme==='light'){ ?>
+    <link rel="stylesheet" href="/adminfrequencia/light.css">
+  <?php } ?>
 </head>
 <body>
-  <div class="top"><div>Admin • Alunos</div><div class="muted"><?php echo htmlspecialchars($msg); ?></div></div>
+  <?php if (($theme ?? '')==='light'){ ?>
+    <div class="header branded">
+      <div class="row">
+        <div class="brand-block">
+          <?php $logo = $_SESSION['escola_logo'] ?? ''; $nome = $_SESSION['escola_nome'] ?? 'Escola'; $user = $_SESSION['user_name'] ?? 'Usuário'; ?>
+          <img src="<?php echo $logo ?: 'https://via.placeholder.com/56x56.png?text=E'; ?>" alt="">
+          <div>
+            <div class="brand"><?php echo htmlspecialchars($nome); ?></div>
+            <div class="user">Usuário: <?php echo htmlspecialchars($user); ?></div>
+          </div>
+        </div>
+        <span class="badge ok"><?php echo htmlspecialchars($msg); ?></span>
+      </div>
+      <div class="row">
+        <a class="btn-secondary" href="?">Tema escuro</a>
+      </div>
+    </div>
+  <?php } else { ?>
+    <div class="top"><div>Admin • Alunos</div><div class="muted"><?php echo htmlspecialchars($msg); ?></div></div>
+  <?php } ?>
   <div class="layout">
     <?php require __DIR__ . '/_sidebar.php'; ?>
     <div class="content">
@@ -176,6 +198,9 @@ $alunos = $stmt->fetchAll();
           <button class="btn" type="button" onclick="openAlunos()">Gerenciar Alunos</button>
         </div>
       </div>
+      <?php if (($theme ?? '')!=='light'){ ?>
+        <div class="row" style="margin:10px 0"><a class="btn" href="?theme=light">Preview tema claro</a></div>
+      <?php } ?>
       <form method="get" class="row">
         <select name="serie">
           <option value="">Filtrar por Série</option>
@@ -192,13 +217,19 @@ $alunos = $stmt->fetchAll();
         <button type="submit">Filtrar</button>
       </form>
       <table>
-        <thead><tr><th>Aluno</th><th>Matrícula</th><th>Foto</th><th>Turmas</th><th>Atualizar Foto</th></tr></thead>
+        <thead><tr><th>Aluno</th><th>Matrícula</th><th>Turmas</th><th>Atualizar Foto</th></tr></thead>
         <tbody>
           <?php foreach ($alunos as $a){ ?>
             <tr>
-              <td><?php echo htmlspecialchars($a['nome']); ?></td>
+              <td>
+                <div class="row" style="gap:8px;align-items:center">
+                  <?php if ($a['foto_aluno']){ ?>
+                    <img src="<?php echo htmlspecialchars((string)$a['foto_aluno']); ?>" alt="" class="avatar">
+                  <?php } ?>
+                  <span><?php echo htmlspecialchars($a['nome']); ?></span>
+                </div>
+              </td>
               <td><?php echo htmlspecialchars($a['matricula']); ?></td>
-              <td><?php echo $a['foto_aluno'] ? '<img src="'.htmlspecialchars((string)$a['foto_aluno']).'" alt="" style="height:32px;border-radius:6px">' : ''; ?></td>
               <td><?php echo htmlspecialchars((string)$a['turmas']); ?></td>
               <td>
                 <form method="post" enctype="multipart/form-data" class="row">
@@ -210,15 +241,15 @@ $alunos = $stmt->fetchAll();
             </tr>
           <?php } ?>
           <?php if (!$alunos){ ?>
-            <tr><td colspan="5" class="muted">Nenhum aluno encontrado.</td></tr>
+            <tr><td colspan="4" class="muted">Nenhum aluno encontrado.</td></tr>
           <?php } ?>
         </tbody>
       </table>
       <div class="row">
         <?php $pages = max(1, (int)ceil($total/$per)); $prev = max(1,$page-1); $next = min($pages,$page+1); ?>
-        <a class="nav" href="?p=<?php echo $prev; ?><?php echo $f_turma? '&turma='.$f_turma:''; ?><?php echo $f_serie? '&serie='.$f_serie:''; ?>" style="text-decoration:none"><span class="nav" style="padding:8px 12px;background:#0b1220;border:1px solid rgba(255,255,255,.12);border-radius:10px;color:var(--text)">Anterior</span></a>
+        <a class="btn-secondary" href="?p=<?php echo $prev; ?><?php echo $f_turma? '&turma='.$f_turma:''; ?><?php echo $f_serie? '&serie='.$f_serie:''; ?>" style="text-decoration:none">Anterior</a>
         <div class="muted">Página <?php echo $page; ?> de <?php echo $pages; ?></div>
-        <a class="nav" href="?p=<?php echo $next; ?><?php echo $f_turma? '&turma='.$f_turma:''; ?><?php echo $f_serie? '&serie='.$f_serie:''; ?>" style="text-decoration:none"><span class="nav" style="padding:8px 12px;background:#0b1220;border:1px solid rgba(255,255,255,.12);border-radius:10px;color:var(--text)">Próxima</span></a>
+        <a class="btn-secondary" href="?p=<?php echo $next; ?><?php echo $f_turma? '&turma='.$f_turma:''; ?><?php echo $f_serie? '&serie='.$f_serie:''; ?>" style="text-decoration:none">Próxima</a>
       </div>
     </div>
   </div>
@@ -232,12 +263,29 @@ $alunos = $stmt->fetchAll();
           <button class="tab" data-tab="tab-enturmar">Enturmar</button>
         </div>
         <div id="tab-cad">
-          <form method="post" enctype="multipart/form-data" class="row">
-            <input name="nome" placeholder="Nome" required>
-            <input name="matricula" placeholder="Matrícula" required>
-            <input name="foto" placeholder="URL da Foto (opcional)">
-            <input type="file" name="foto_file" accept="image/*">
-            <button name="act" value="create_aluno">Cadastrar</button>
+          <form method="post" enctype="multipart/form-data" class="form-grid">
+            <div class="field">
+              <label>Nome</label>
+              <input name="nome" required>
+            </div>
+            <div class="field">
+              <label>Matrícula</label>
+              <input name="matricula" required>
+            </div>
+            <div class="field">
+              <label>Foto (URL)</label>
+              <input name="foto" placeholder="URL da Foto (opcional)">
+            </div>
+            <div class="field">
+              <label>Upload Foto</label>
+              <input type="file" name="foto_file" accept="image/*" onchange="previewAvatar(this,'cad-avatar')">
+            </div>
+            <div class="span-2">
+              <img id="cad-avatar" class="avatar" alt="" style="display:none">
+            </div>
+            <div class="span-2 actions">
+              <button class="btn" name="act" value="create_aluno">Cadastrar</button>
+            </div>
           </form>
         </div>
         <div id="tab-editar" style="display:none">

@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Preview • Layout Claro</title>
+  <link rel="stylesheet" href="/adminfrequencia/light.css">
+</head>
+<body>
+  <div class="header branded">
+    <div class="row">
+      <div class="brand-block">
+        <img src="https://via.placeholder.com/56x56.png?text=E" alt="">
+        <div>
+          <div class="brand">EEEP Pedro de Queiroz Lima</div>
+          <div class="user">Usuário: Davi Garcia</div>
+        </div>
+      </div>
+      <span class="badge ok">Conectado</span>
+    </div>
+    <div class="row">
+      <button class="secondary">Ação secundária</button>
+      <button>Salvar</button>
+    </div>
+  </div>
+  <div class="app">
+    <div class="sidebar">
+      <div class="brand">Escola • Nome</div>
+      <div class="nav">
+        <a class="active" href="#">Dashboard</a>
+        <a href="#">Usuários</a>
+        <a href="#">Escolas</a>
+        <a href="#">Períodos</a>
+        <a href="#">Séries e Turmas</a>
+        <a href="#">Alunos</a>
+        <a href="#">Enturmação</a>
+        <a href="#">Importar</a>
+      </div>
+    </div>
+    <div class="content">
+      <h2 class="title">Cards</h2>
+      <div class="cards">
+        <div class="card">
+          <div class="title">Alunos</div>
+          <div class="row"><span class="badge ok">ativo</span><span class="badge warn">pendente</span></div>
+        </div>
+        <div class="card">
+          <div class="title">Turmas</div>
+          <div>2026 • 4 turmas</div>
+        </div>
+        <div class="card">
+          <div class="title">Séries</div>
+          <div>1º • 2º • 3º</div>
+        </div>
+      </div>
+      <h2 class="title">Tabela</h2>
+      <table>
+        <thead>
+          <tr><th>Nome</th><th>Status</th><th>Ações</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>EEEP Pedro de Queiroz Lima</td>
+            <td><span class="badge ok">ativo</span></td>
+            <td class="row">
+              <button class="secondary">Editar</button>
+              <button>Salvar</button>
+            </td>
+          </tr>
+          <tr>
+            <td>Julia de Melo</td>
+            <td><span class="badge warn">inativo</span></td>
+            <td class="row">
+              <button class="secondary">Editar</button>
+              <button>Salvar</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <h2 class="title">Form</h2>
+      <div class="row" style="margin-top:12px">
+        <input placeholder="Nome">
+        <select><option>admin</option><option>gestão</option></select>
+        <button>Criar</button>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

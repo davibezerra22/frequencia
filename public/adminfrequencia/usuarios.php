@@ -68,9 +68,31 @@ $users = $users_stmt->fetchAll();
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Admin • Usuários</title>
   <link rel="stylesheet" href="/adminfrequencia/admin.css">
+  <?php $theme = $_GET['theme'] ?? ''; if ($theme==='light'){ ?>
+    <link rel="stylesheet" href="/adminfrequencia/light.css">
+  <?php } ?>
 </head>
 <body>
-  <div class="top"><div>Admin • Usuários</div><div class="muted"><?php echo htmlspecialchars($msg); ?></div></div>
+  <?php if (($theme ?? '')==='light'){ ?>
+    <div class="header branded">
+      <div class="row">
+        <div class="brand-block">
+          <?php $logo = $_SESSION['escola_logo'] ?? ''; $nome = $_SESSION['escola_nome'] ?? 'Escola'; $user = $_SESSION['user_name'] ?? 'Usuário'; ?>
+          <img src="<?php echo $logo ?: 'https://via.placeholder.com/56x56.png?text=E'; ?>" alt="">
+          <div>
+            <div class="brand"><?php echo htmlspecialchars($nome); ?></div>
+            <div class="user">Usuário: <?php echo htmlspecialchars($user); ?></div>
+          </div>
+        </div>
+        <span class="badge ok"><?php echo htmlspecialchars($msg); ?></span>
+      </div>
+      <div class="row">
+        <a class="btn-secondary" href="?">Tema escuro</a>
+      </div>
+    </div>
+  <?php } else { ?>
+    <div class="top"><div>Admin • Usuários</div><div class="muted"><?php echo htmlspecialchars($msg); ?></div></div>
+  <?php } ?>
   <div class="layout">
     <?php require __DIR__ . '/_sidebar.php'; ?>
     <div class="content">
@@ -78,6 +100,9 @@ $users = $users_stmt->fetchAll();
         <h2 class="title" style="margin:0">Usuários</h2>
         <button class="btn" type="button" onclick="openUser()">Novo Usuário</button>
       </div>
+      <?php if (($theme ?? '')!=='light'){ ?>
+        <div class="row" style="margin:10px 0"><a class="btn" href="?theme=light">Preview tema claro</a></div>
+      <?php } ?>
       <div class="modal-backdrop" id="modalUser">
         <div class="modal">
           <div class="hd"><div>Novo Usuário</div><button class="btn-secondary" type="button" onclick="closeUser()">Fechar</button></div>

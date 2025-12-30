@@ -1,0 +1,47 @@
+:root{--bg:#F7F9FC;--surface:#FFFFFF;--surface-2:#FAFBFF;--border:#E6E9EF;--text:#1F2937;--muted:#6B7280;--primary:#2BBE74;--primary-contrast:#FFFFFF;--success:#34D399;--danger:#EF6F6C;--warning:#F59E0B;--card-shadow:0 8px 24px rgba(31,41,55,.08)}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,Roboto,Open Sans,system-ui,-apple-system,Segoe UI,sans-serif}
+.app{display:grid;grid-template-columns:260px 1fr;min-height:100vh}
+.sidebar{background:var(--surface);border-right:1px solid var(--border);padding:20px}
+.brand{font-weight:600;margin-bottom:16px}
+.nav{display:flex;flex-direction:column;gap:6px}
+.nav a{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;color:var(--text);text-decoration:none;background:var(--surface-2);border:1px solid var(--border)}
+.nav a:hover{background:var(--surface-2)}
+.nav a.active{background:rgba(43,190,116,.12);color:#0F5132}
+.header{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 20px;display:flex;align-items:center;justify-content:space-between}
+.header.branded{background:linear-gradient(90deg,var(--primary) 0%,#24a864 100%);color:var(--primary-contrast);border-bottom:none}
+.header.branded .brand,.header.branded .badge,.header.branded .row{color:var(--primary-contrast)}
+.header.branded .badge{background:rgba(255,255,255,.18)}
+.header.branded button{background:rgba(255,255,255,.18);color:#fff;border:1px solid rgba(255,255,255,.35)}
+.header.branded button.secondary{background:#fff;color:#12633E;border:1px solid #CDE9DA}
+.content{padding:20px;background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:var(--card-shadow)}
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:16px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:var(--card-shadow);padding:16px}
+.title{font-weight:600;margin:0 0 12px}
+table{width:100%;border-collapse:separate;border-spacing:0;background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;box-shadow:var(--card-shadow)}
+thead th{padding:12px 14px;background:var(--surface-2);text-align:left;font-weight:600;border-bottom:1px solid var(--border)}
+tbody td{padding:12px 14px;border-top:1px solid var(--border)}
+.row{display:flex;gap:10px;align-items:center}
+input,select,button{height:40px;border-radius:10px;border:1px solid var(--border);background:#fff;color:var(--text);padding:0 12px}
+input::placeholder{color:var(--muted)}
+button{background:var(--primary);color:var(--primary-contrast);border:none}
+button.secondary{background:#EEF7F2;color:#12633E;border:1px solid #CDE9DA}
+.btn{display:inline-block;padding:10px 12px;border-radius:10px;background:var(--primary);color:var(--primary-contrast);border:none;text-decoration:none}
+.btn-secondary{padding:10px 12px;border-radius:10px;border:1px solid #CDE9DA;background:#EEF7F2;color:#12633E;text-decoration:none}
+.badge{display:inline-block;padding:6px 10px;border-radius:999px;font-size:12px}
+.badge.ok{background:#E7F7EE;color:#12633E}
+.badge.warn{background:#FFF5E6;color:#8A5A00}
+.badge.err{background:#FDEEEE;color:#7A1A1A}
+.brand-block{display:flex;align-items:center;gap:12px}
+.brand-block img{height:28px;width:28px;border-radius:999px;object-fit:cover;border:1px solid rgba(255,255,255,.35)}
+.user{font-size:12px;opacity:.9}
+/* Modal overrides for light theme */
+.modal{background:var(--surface);border:1px solid var(--border);box-shadow:var(--card-shadow)}
+.modal .hd{border-bottom:1px solid var(--border)}
+.modal .ft{border-top:1px solid var(--border)}
+.avatar{height:72px;width:72px;border-radius:50%;object-fit:cover;border:2px solid var(--border);box-shadow:0 4px 10px rgba(31,41,55,.08)}
+@media(max-width:960px){.app{grid-template-columns:1fr}.sidebar{display:none}.cards{grid-template-columns:1fr}}
+.tab{padding:8px 10px;border-radius:10px;border:1px solid var(--border);background:var(--surface-2);color:var(--text);cursor:pointer}
+.tab.active{border-color:var(--primary);background:#EEF7F2;color:#12633E}
+@media(max-width:960px){.app{grid-template-columns:1fr}.sidebar{display:none}.cards{grid-template-columns:1fr}}
