@@ -73,6 +73,14 @@ Aplicação web para gestão de presença e cadastro de alunos, turmas, séries 
   - Consegue criar usuários da própria escola em “Usuários”
   - Gerencia períodos, séries, turmas e alunos apenas da sua escola
 
+## Credenciais de Teste
+- Superadmin:
+  - Login: `master`
+  - Senha: `master`
+- Admin da escola:
+  - Criado junto com a escola no modal “Nova Escola” (nome/login/senha informados ali)
+- Observação: credenciais são apenas para testes; altere as senhas em produção.
+
 ## Importação CSV de Alunos
 - Formato: `nome;matricula;foto` (separador `;`)
 - Cabeçalho opcional na primeira linha
