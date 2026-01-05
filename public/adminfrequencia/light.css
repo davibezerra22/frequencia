@@ -22,6 +22,7 @@ body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,Roboto,Op
 table{width:100%;border-collapse:separate;border-spacing:0;background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;box-shadow:var(--card-shadow)}
 thead th{padding:12px 14px;background:var(--surface-2);text-align:left;font-weight:600;border-bottom:1px solid var(--border)}
 tbody td{padding:12px 14px;border-top:1px solid var(--border)}
+table.zebra tbody tr:nth-child(even){background:var(--surface-2)}
 .row{display:flex;gap:10px;align-items:center}
 input,select,button{height:40px;border-radius:10px;border:1px solid var(--border);background:#fff;color:var(--text);padding:0 12px}
 input::placeholder{color:var(--muted)}
@@ -34,13 +35,18 @@ button.secondary{background:#EEF7F2;color:#12633E;border:1px solid #CDE9DA}
 .badge.warn{background:#FFF5E6;color:#8A5A00}
 .badge.err{background:#FDEEEE;color:#7A1A1A}
 .brand-block{display:flex;align-items:center;gap:12px}
-.brand-block img{height:28px;width:28px;border-radius:999px;object-fit:cover;border:1px solid rgba(255,255,255,.35)}
+.brand-block img{height:50px;width:50px;border-radius:999px;object-fit:cover;border:1px solid rgba(255,255,255,.35)}
 .user{font-size:12px;opacity:.9}
 /* Modal overrides for light theme */
 .modal{background:var(--surface);border:1px solid var(--border);box-shadow:var(--card-shadow)}
 .modal .hd{border-bottom:1px solid var(--border)}
 .modal .ft{border-top:1px solid var(--border)}
 .avatar{height:72px;width:72px;border-radius:50%;object-fit:cover;border:2px solid var(--border);box-shadow:0 4px 10px rgba(31,41,55,.08)}
+.toast-container{position:fixed;top:16px;right:16px;display:flex;flex-direction:column;gap:8px;z-index:200}
+.toast-container.center{top:20%;left:50%;right:auto;transform:translateX(-50%);align-items:center}
+.toast{padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--surface);color:var(--text);box-shadow:var(--card-shadow)}
+.toast.ok{border-color:#12633E;background:#E7F7EE;color:#12633E}
+.toast.err{border-color:#7A1A1A;background:#FDEEEE;color:#7A1A1A}
 @media(max-width:960px){.app{grid-template-columns:1fr}.sidebar{display:none}.cards{grid-template-columns:1fr}}
 .tab{padding:8px 10px;border-radius:10px;border:1px solid var(--border);background:var(--surface-2);color:var(--text);cursor:pointer}
 .tab.active{border-color:var(--primary);background:#EEF7F2;color:#12633E}

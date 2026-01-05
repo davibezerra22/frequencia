@@ -73,7 +73,7 @@ foreach ($anos as $a) {
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Admin • Períodos Letivos</title>
   <link rel="stylesheet" href="/adminfrequencia/admin.css">
-  <?php $theme = $_GET['theme'] ?? ''; if ($theme==='light'){ ?>
+  <?php $theme = $_GET['theme'] ?? ($_POST['theme'] ?? ''); if ($theme!=='dark'){ ?>
     <link rel="stylesheet" href="/adminfrequencia/light.css">
   <?php } ?>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
@@ -83,7 +83,7 @@ foreach ($anos as $a) {
   <script src="/adminfrequencia/modal.js"></script>
 </head>
 <body>
-  <?php if (($theme ?? '')==='light'){ ?>
+  <?php if (($theme ?? '')!=='dark'){ ?>
     <div class="header branded">
       <div class="row">
         <div class="brand-block">
@@ -94,12 +94,20 @@ foreach ($anos as $a) {
             <div class="user">Usuário: <?php echo htmlspecialchars($user); ?></div>
           </div>
         </div>
-        <span class="badge ok"><?php echo htmlspecialchars($msg); ?></span>
+        <span class="badge ok" style="visibility:hidden">Conectado</span>
       </div>
-      <div class="row"><a class="btn-secondary" href="?<?php echo $view_escola? 'escola='.$view_escola:''; ?>">Tema escuro</a></div>
+      <div class="row"><a class="btn-secondary" href="?<?php echo $view_escola? 'escola='.$view_escola.'&':''; ?>theme=dark">Tema escuro</a></div>
+    </div>
     </div>
   <?php } else { ?>
     <div class="top"><div>Admin • Períodos Letivos</div><div class="muted"><?php echo htmlspecialchars($msg); ?></div></div>
+    <div class="layout">
+      <?php require __DIR__ . '/_sidebar.php'; ?>
+      <div class="content"><div class="row" style="margin:10px 0"><a class="btn" href="?<?php echo $view_escola? 'escola='.$view_escola:''; ?>">Tema claro</a></div></div>
+    </div>
+    </body>
+    </html>
+    <?php return; ?>
   <?php } ?>
   <div class="layout">
     <?php require __DIR__ . '/_sidebar.php'; ?>
@@ -115,15 +123,13 @@ foreach ($anos as $a) {
                   <option value="<?php echo $sc['id']; ?>" <?php echo ((string)$escola_atual===(string)$sc['id'])?'selected':''; ?>><?php echo htmlspecialchars($sc['nome']); ?></option>
                 <?php } ?>
               </select>
+              <?php if (($theme ?? '')==='dark'){ ?><input type="hidden" name="theme" value="dark"><?php } ?>
               <button type="submit">Filtrar</button>
             </form>
           <?php } ?>
           <button class="btn-secondary" type="button" onclick="openConfig()">Configurar Ano</button>
         </div>
       </div>
-      <?php if (($theme ?? '')!=='light'){ ?>
-        <div class="row" style="margin:10px 0"><a class="btn" href="?<?php echo $view_escola? 'escola='.$view_escola.'&':''; ?>theme=light">Preview tema claro</a></div>
-      <?php } ?>
       <div class="modal-backdrop" id="modalConfig">
         <div class="modal">
           <div class="hd"><div>Configuração de Ano Letivo</div><button class="btn-secondary" type="button" onclick="closeConfig()">Fechar</button></div>
@@ -160,7 +166,7 @@ foreach ($anos as $a) {
           <div class="muted">Ano: <strong><?php echo $a['ano']; ?></strong> • Status: <?php echo $a['status']; ?> <?php if ((string)$ano_atual === (string)$a['id']){ echo '• Atual'; } ?></div>
           <div><button class="btn" type="button" onclick="openPeriod('<?php echo $a['id']; ?>')">Períodos Letivos</button></div>
         </div>
-        <table>
+        <table class="zebra">
           <thead><tr><th>Nome</th><th>Início</th><th>Fim</th></tr></thead>
           <tbody>
             <?php foreach ($periodos_map[$a['id']] as $p){ ?>
@@ -179,7 +185,7 @@ foreach ($anos as $a) {
           <div class="modal">
             <div class="hd"><div>Períodos Letivos • Ano <?php echo $a['ano']; ?></div><button class="btn-secondary" type="button" onclick="closePeriod('<?php echo $a['id']; ?>')">Fechar</button></div>
             <div class="bd">
-              <table>
+              <table class="zebra">
                 <thead><tr><th>Nome</th><th>Início</th><th>Fim</th><th>Ações</th></tr></thead>
                 <tbody>
                   <?php foreach ($periodos_map[$a['id']] as $p){ ?>
@@ -220,5 +226,11 @@ foreach ($anos as $a) {
       <?php } ?>
     </div>
   </div>
+  <script src="/adminfrequencia/modal.js"></script>
+  <script>
+    <?php if ($msg){ $type = stripos($msg,'Erro')!==false ? 'err' : 'ok'; ?>
+      showToast('<?php echo htmlspecialchars($msg); ?>','<?php echo $type; ?>')
+    <?php } ?>
+  </script>
 </body>
 </html>

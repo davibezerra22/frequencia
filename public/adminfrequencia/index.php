@@ -10,21 +10,22 @@ require_once __DIR__ . '/../../src/Bootstrap.php';
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Portal Administrativo • Login</title>
+  <link rel="stylesheet" href="/adminfrequencia/light.css">
   <style>
-    :root{--bg:#0b0f1a;--card:#121826;--text:#e5e7eb;--muted:#9ca3af;--accent:#3b82f6;--danger:#ef4444}
-    *{box-sizing:border-box}body{margin:0;background:linear-gradient(120deg,#0b0f1a,#0f172a);font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,sans-serif;color:var(--text)}
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,sans-serif;color:var(--text)}
     .wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
-    .card{width:100%;max-width:420px;background:var(--card);border-radius:16px;padding:28px;box-shadow:0 20px 60px rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.06)}
+    .card{width:100%;max-width:420px;background:var(--surface);border-radius:16px;padding:28px;box-shadow:var(--card-shadow);border:1px solid var(--border)}
     .title{font-size:22px;margin:0 0 6px}
     .sub{font-size:14px;color:var(--muted);margin:0 0 18px}
     .field{margin:12px 0}
     label{display:block;font-size:13px;color:var(--muted);margin-bottom:8px}
-    input{width:100%;padding:12px 14px;border-radius:10px;border:1px solid rgba(255,255,255,.12);background:#0b1220;color:var(--text);outline:none}
-    input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(59,130,246,.15)}
-    .btn{width:100%;padding:12px 14px;border:0;border-radius:10px;background:var(--accent);color:white;font-weight:600;cursor:pointer}
+    input{width:100%;padding:12px 14px;border-radius:10px;border:1px solid var(--border);background:#fff;color:var(--text);outline:none}
+    input:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(43,190,116,.18)}
+    .btn{width:100%;padding:12px 14px;border:0;border-radius:10px;background:var(--primary);color:#fff;font-weight:600;cursor:pointer}
     .btn:disabled{opacity:.6;cursor:not-allowed}
     .status{margin-top:12px;font-size:13px}
-    .status.ok{color:#34d399}.status.err{color:var(--danger)}
+    .status.ok{color:var(--success)}.status.err{color:var(--danger)}
     .brand{display:flex;align-items:center;gap:10px;margin-bottom:14px;font-weight:600}
     .hint{margin-top:14px;color:var(--muted);font-size:12px}
   </style>

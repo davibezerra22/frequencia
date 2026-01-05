@@ -121,10 +121,12 @@ $per = 20;
 $offset = ($page - 1) * $per;
 $f_turma = (int)($_GET['turma'] ?? 0);
 $f_serie = (int)($_GET['serie'] ?? 0);
+$q = trim($_GET['q'] ?? '');
 $where = '';
 $params = [];
 if ($f_turma) { $where .= ' AND mt.turma_id=?'; $params[] = $f_turma; }
 if ($f_serie) { $where .= ' AND s.id=?'; $params[] = $f_serie; }
+if ($q !== '') { $where .= ' AND (a.nome LIKE ? OR a.matricula LIKE ?)'; $like = '%'.$q.'%'; $params[] = $like; $params[] = $like; }
 $sqlCount = 'SELECT COUNT(DISTINCT a.id) AS c
 FROM alunos a
 LEFT JOIN matriculas_turma mt ON mt.aluno_id=a.id
@@ -153,12 +155,13 @@ $alunos = $stmt->fetchAll();
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Admin • Alunos</title>
   <link rel="stylesheet" href="/adminfrequencia/admin.css">
-  <?php $theme = $_GET['theme'] ?? ''; if ($theme==='light'){ ?>
+  <?php $theme = $_GET['theme'] ?? ''; if ($theme!=='dark'){ ?>
     <link rel="stylesheet" href="/adminfrequencia/light.css">
   <?php } ?>
+  <script src="https://unpkg.com/feather-icons"></script>
 </head>
 <body>
-  <?php if (($theme ?? '')==='light'){ ?>
+  <?php if (($theme ?? '')!=='dark'){ ?>
     <div class="header branded">
       <div class="row">
         <div class="brand-block">
@@ -169,14 +172,20 @@ $alunos = $stmt->fetchAll();
             <div class="user">Usuário: <?php echo htmlspecialchars($user); ?></div>
           </div>
         </div>
-        <span class="badge ok"><?php echo htmlspecialchars($msg); ?></span>
+        <span class="badge ok" style="visibility:hidden">Conectado</span>
       </div>
-      <div class="row">
-        <a class="btn-secondary" href="?">Tema escuro</a>
-      </div>
+    </div>
+      <div class="row"><a class="btn-secondary" href="?theme=dark">Tema escuro</a></div>
     </div>
   <?php } else { ?>
     <div class="top"><div>Admin • Alunos</div><div class="muted"><?php echo htmlspecialchars($msg); ?></div></div>
+    <div class="layout">
+      <?php require __DIR__ . '/_sidebar.php'; ?>
+      <div class="content"><div class="row" style="margin:10px 0"><a class="btn" href="?">Tema claro</a></div></div>
+    </div>
+    </body>
+    </html>
+    <?php return; ?>
   <?php } ?>
   <div class="layout">
     <?php require __DIR__ . '/_sidebar.php'; ?>
@@ -198,9 +207,6 @@ $alunos = $stmt->fetchAll();
           <button class="btn" type="button" onclick="openAlunos()">Gerenciar Alunos</button>
         </div>
       </div>
-      <?php if (($theme ?? '')!=='light'){ ?>
-        <div class="row" style="margin:10px 0"><a class="btn" href="?theme=light">Preview tema claro</a></div>
-      <?php } ?>
       <form method="get" class="row">
         <select name="serie">
           <option value="">Filtrar por Série</option>
@@ -214,54 +220,50 @@ $alunos = $stmt->fetchAll();
             <option value="<?php echo $t['id']; ?>" <?php echo $f_turma===$t['id']?'selected':''; ?>><?php echo htmlspecialchars($t['serie'].' • '.$t['nome']); ?></option>
           <?php } ?>
         </select>
+        <input name="q" placeholder="Buscar por nome ou matrícula" value="<?php echo htmlspecialchars($q); ?>" style="min-width:220px">
         <button type="submit">Filtrar</button>
       </form>
-      <table>
-        <thead><tr><th>Aluno</th><th>Matrícula</th><th>Turmas</th><th>Atualizar Foto</th></tr></thead>
+      <table class="zebra">
+        <thead><tr><th>Nº</th><th>Aluno</th><th>Matrícula</th><th>Turmas</th><th>Ações</th></tr></thead>
         <tbody>
-          <?php foreach ($alunos as $a){ ?>
+          <?php $i=0; foreach ($alunos as $a){ $i++; $num=$offset+$i; ?>
             <tr>
+              <td><?php echo $num; ?></td>
               <td>
                 <div class="row" style="gap:8px;align-items:center">
-                  <?php if ($a['foto_aluno']){ ?>
-                    <img src="<?php echo htmlspecialchars((string)$a['foto_aluno']); ?>" alt="" class="avatar">
-                  <?php } ?>
+                  <?php $photo = (string)$a['foto_aluno']; if ($photo===''){ $photo='https://via.placeholder.com/64x64.png?text=A'; } ?>
+                  <img src="<?php echo htmlspecialchars($photo); ?>" alt="" class="avatar" onerror="this.src='https://via.placeholder.com/64x64.png?text=A'">
                   <span><?php echo htmlspecialchars($a['nome']); ?></span>
                 </div>
               </td>
               <td><?php echo htmlspecialchars($a['matricula']); ?></td>
               <td><?php echo htmlspecialchars((string)$a['turmas']); ?></td>
-              <td>
-                <form method="post" enctype="multipart/form-data" class="row">
-                  <input type="hidden" name="id" value="<?php echo $a['id']; ?>">
-                  <input type="file" name="foto_file" accept="image/*">
-                  <button name="act" value="upload_foto">Enviar</button>
-                </form>
+              <td style="white-space:nowrap">
+                <button class="btn-secondary" type="button" onclick="openEditAluno('<?php echo $a['id']; ?>','<?php echo htmlspecialchars($a['nome']); ?>')"><i data-feather="edit-2"></i></button>
+                <button class="btn-secondary" type="button" onclick="openFotoAluno('<?php echo $a['id']; ?>')"><i data-feather="image"></i></button>
+                <button class="btn-secondary" type="button" onclick="openEnturmarAluno('<?php echo $a['id']; ?>')"><i data-feather="user-plus"></i></button>
+                <button class="btn-secondary" type="button" onclick="openDeleteAluno('<?php echo $a['id']; ?>','<?php echo htmlspecialchars($a['nome']); ?>')"><i data-feather="trash-2"></i></button>
               </td>
             </tr>
           <?php } ?>
           <?php if (!$alunos){ ?>
-            <tr><td colspan="4" class="muted">Nenhum aluno encontrado.</td></tr>
+            <tr><td colspan="5" class="muted">Nenhum aluno encontrado.</td></tr>
           <?php } ?>
         </tbody>
       </table>
       <div class="row">
         <?php $pages = max(1, (int)ceil($total/$per)); $prev = max(1,$page-1); $next = min($pages,$page+1); ?>
-        <a class="btn-secondary" href="?p=<?php echo $prev; ?><?php echo $f_turma? '&turma='.$f_turma:''; ?><?php echo $f_serie? '&serie='.$f_serie:''; ?>" style="text-decoration:none">Anterior</a>
+        <?php $qs_t = $f_turma? '&turma='.$f_turma:''; $qs_s = $f_serie? '&serie='.$f_serie:''; $qs_q = $q!==''? '&q='.urlencode($q):''; ?>
+        <a class="btn-secondary" href="?p=<?php echo $prev; ?><?php echo $qs_t; ?><?php echo $qs_s; ?><?php echo $qs_q; ?>" style="text-decoration:none">Anterior</a>
         <div class="muted">Página <?php echo $page; ?> de <?php echo $pages; ?></div>
-        <a class="btn-secondary" href="?p=<?php echo $next; ?><?php echo $f_turma? '&turma='.$f_turma:''; ?><?php echo $f_serie? '&serie='.$f_serie:''; ?>" style="text-decoration:none">Próxima</a>
+        <a class="btn-secondary" href="?p=<?php echo $next; ?><?php echo $qs_t; ?><?php echo $qs_s; ?><?php echo $qs_q; ?>" style="text-decoration:none">Próxima</a>
       </div>
     </div>
   </div>
   <div class="modal-backdrop" id="modalAlunos">
     <div class="modal">
-      <div class="hd"><div>Gestão de Alunos</div><button class="btn-secondary" type="button" onclick="closeAlunos()">Fechar</button></div>
+      <div class="hd"><div>Cadastrar Aluno</div><button class="btn-secondary" type="button" onclick="closeAlunos()">Fechar</button></div>
       <div class="bd">
-        <div class="tabs">
-          <button class="tab active" data-tab="tab-cad">Cadastrar</button>
-          <button class="tab" data-tab="tab-editar">Editar/Excluir</button>
-          <button class="tab" data-tab="tab-enturmar">Enturmar</button>
-        </div>
         <div id="tab-cad">
           <form method="post" enctype="multipart/form-data" class="form-grid">
             <div class="field">
@@ -288,70 +290,73 @@ $alunos = $stmt->fetchAll();
             </div>
           </form>
         </div>
-        <div id="tab-editar" style="display:none">
-          <table>
-            <thead><tr><th>Aluno</th><th>Matrícula</th><th>Foto</th><th>Ações</th></tr></thead>
-            <tbody>
-              <?php foreach ($alunos as $a){ ?>
-                <tr>
-                  <form method="post">
-                    <td><input name="nome" value="<?php echo htmlspecialchars($a['nome']); ?>"></td>
-                    <td><?php echo htmlspecialchars($a['matricula']); ?></td>
-                    <td><input name="foto" value="<?php echo htmlspecialchars((string)$a['foto_aluno']); ?>"></td>
-                    <td style="white-space:nowrap;display:flex;gap:8px">
-                      <input type="hidden" name="id" value="<?php echo $a['id']; ?>">
-                      <button name="act" value="update_aluno">Salvar</button>
-                      <button name="act" value="delete_aluno" onclick="return confirm('Excluir aluno?')">Excluir</button>
-                    </td>
-                  </form>
-                </tr>
-                <tr>
-                  <td colspan="4">
-                    <form method="post" enctype="multipart/form-data" class="row">
-                      <input type="hidden" name="id" value="<?php echo $a['id']; ?>">
-                      <input type="file" name="foto_file" accept="image/*">
-                      <button name="act" value="upload_foto">Upload Foto</button>
-                    </form>
-                  </td>
-                </tr>
-              <?php } ?>
-              <?php if (!$alunos){ ?>
-                <tr><td colspan="4" class="muted">Nenhum aluno para editar.</td></tr>
-              <?php } ?>
-            </tbody>
-          </table>
-        </div>
-        <div id="tab-enturmar" style="display:none">
-          <table>
-            <thead><tr><th>Aluno</th><th>Enturmar em (Ano atual)</th><th>Ação</th></tr></thead>
-            <tbody>
-              <?php foreach ($alunos as $a){ ?>
-                <tr>
-                  <form method="post" class="row" style="gap:8px">
-                    <td style="min-width:220px"><?php echo htmlspecialchars($a['nome']); ?></td>
-                    <td>
-                      <input type="hidden" name="aluno_id" value="<?php echo $a['id']; ?>">
-                      <select name="turma_id" required>
-                        <option value="">Selecione</option>
-                        <?php foreach ($turmas as $t){ ?>
-                          <option value="<?php echo $t['id']; ?>"><?php echo htmlspecialchars($t['serie'].' • '.$t['nome']); ?></option>
-                        <?php } ?>
-                      </select>
-                    </td>
-                    <td><button name="act" value="enturmar">Enturmar</button></td>
-                  </form>
-                </tr>
-              <?php } ?>
-              <?php if (!$turmas){ ?>
-                <tr><td colspan="3" class="muted">Crie turmas no Ano atual para enturmar alunos.</td></tr>
-              <?php } ?>
-            </tbody>
-          </table>
-        </div>
       </div>
-      <div class="ft"><button class="btn-secondary" type="button" onclick="closeAlunos()">Concluir</button></div>
+      <div class="ft"></div>
+    </div>
+  </div>
+  <div class="modal-backdrop" id="modalEditAluno">
+    <div class="modal">
+      <div class="hd"><div>Editar Aluno</div><button class="btn-secondary" type="button" onclick="closeEditAluno()">Fechar</button></div>
+      <div class="bd">
+        <form method="post" class="form-grid">
+          <input type="hidden" name="id">
+          <div class="field"><label>Nome</label><input name="nome" required></div>
+          <div class="actions"><button class="btn" name="act" value="update_aluno">Salvar</button></div>
+        </form>
+      </div>
+      <div class="ft"></div>
+    </div>
+  </div>
+  <div class="modal-backdrop" id="modalEnturmarAluno">
+    <div class="modal">
+      <div class="hd"><div>Enturmar Aluno</div><button class="btn-secondary" type="button" onclick="closeEnturmarAluno()">Fechar</button></div>
+      <div class="bd">
+        <form method="post" class="row">
+          <input type="hidden" name="aluno_id">
+          <select name="turma_id" required>
+            <option value="">Selecione a Turma</option>
+            <?php foreach ($turmas as $t){ ?>
+              <option value="<?php echo $t['id']; ?>"><?php echo htmlspecialchars($t['serie'].' • '.$t['nome']); ?></option>
+            <?php } ?>
+          </select>
+          <button class="btn" name="act" value="enturmar">Enturmar</button>
+        </form>
+      </div>
+      <div class="ft"></div>
+    </div>
+  </div>
+  <div class="modal-backdrop" id="modalFotoAluno">
+    <div class="modal">
+      <div class="hd"><div>Upload de Foto</div><button class="btn-secondary" type="button" onclick="closeFotoAluno()">Fechar</button></div>
+      <div class="bd">
+        <form method="post" enctype="multipart/form-data" class="row">
+          <input type="hidden" name="id">
+          <input type="file" name="foto_file" accept="image/*" required>
+          <button class="btn" name="act" value="upload_foto">Enviar</button>
+        </form>
+      </div>
+      <div class="ft"></div>
+    </div>
+  </div>
+  <div class="modal-backdrop" id="modalDeleteAluno">
+    <div class="modal">
+      <div class="hd"><div>Excluir Aluno</div><button class="btn-secondary" type="button" onclick="closeDeleteAluno()">Fechar</button></div>
+      <div class="bd">
+        <div class="muted" id="del_nome"></div>
+        <form method="post" class="row">
+          <input type="hidden" name="id">
+          <button class="btn" name="act" value="delete_aluno">Confirmar Exclusão</button>
+        </form>
+      </div>
+      <div class="ft"></div>
     </div>
   </div>
   <script src="/adminfrequencia/modal.js"></script>
+  <script>
+    <?php if ($msg){ $type = stripos($msg,'Erro')!==false ? 'err' : 'ok'; ?>
+      showToast('<?php echo htmlspecialchars($msg); ?>',{type:'<?php echo $type; ?>',center:true,duration:6000})
+    <?php } ?>
+    if (window.feather){ feather.replace() }
+  </script>
   </body>
   </html>

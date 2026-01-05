@@ -99,12 +99,12 @@ $escolas = $pdo->query('SELECT id, nome, logotipo, slug, status FROM escolas ORD
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Superadmin • Escolas</title>
   <link rel="stylesheet" href="/adminfrequencia/admin.css">
-  <?php $theme = $_GET['theme'] ?? ''; if ($theme==='light'){ ?>
+  <?php $theme = $_GET['theme'] ?? ''; if ($theme!=='dark'){ ?>
     <link rel="stylesheet" href="/adminfrequencia/light.css">
   <?php } ?>
 </head>
 <body>
-  <?php if (($theme ?? '')==='light'){ ?>
+  <?php if (($theme ?? '')!=='dark'){ ?>
     <div class="header branded">
       <div class="row">
         <div class="brand-block">
@@ -113,16 +113,20 @@ $escolas = $pdo->query('SELECT id, nome, logotipo, slug, status FROM escolas ORD
           <div>
             <div class="brand"><?php echo htmlspecialchars($nome); ?></div>
             <div class="user">Usuário: <?php echo htmlspecialchars($user); ?></div>
-          </div>
         </div>
-        <span class="badge ok"><?php echo htmlspecialchars($msg); ?></span>
+        <span class="badge ok" style="visibility:hidden">Conectado</span>
       </div>
-      <div class="row">
-        <a class="btn-secondary" href="?">Tema escuro</a>
-      </div>
+      <div class="row"><a class="btn-secondary" href="?theme=dark">Tema escuro</a></div>
     </div>
   <?php } else { ?>
     <div class="top"><div>Superadmin • Escolas</div><div class="muted"><?php echo htmlspecialchars($msg); ?></div></div>
+    <div class="layout">
+      <?php require __DIR__ . '/_sidebar.php'; ?>
+      <div class="content"><div class="row" style="margin:10px 0"><a class="btn" href="?">Tema claro</a></div></div>
+    </div>
+    </body>
+    </html>
+    <?php return; ?>
   <?php } ?>
   <div class="layout">
     <?php require __DIR__ . '/_sidebar.php'; ?>
@@ -131,9 +135,6 @@ $escolas = $pdo->query('SELECT id, nome, logotipo, slug, status FROM escolas ORD
         <h2 class="title" style="margin:0">Escolas</h2>
         <button class="btn" type="button" onclick="openSchool()">Nova Escola</button>
       </div>
-      <?php if (($theme ?? '')!=='light'){ ?>
-        <div class="row" style="margin:10px 0"><a class="btn" href="?theme=light">Preview tema claro</a></div>
-      <?php } ?>
       <div class="modal-backdrop" id="modalSchool">
         <div class="modal">
           <div class="hd"><div>Nova Escola</div><button class="btn-secondary" type="button" onclick="closeSchool()">Fechar</button></div>

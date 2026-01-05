@@ -77,12 +77,12 @@ if ($ano_atual) {
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Admin • Turmas</title>
   <link rel="stylesheet" href="/adminfrequencia/admin.css">
-  <?php $theme = $_GET['theme'] ?? ''; if ($theme==='light'){ ?>
+  <?php $theme = $_GET['theme'] ?? ''; if ($theme!=='dark'){ ?>
     <link rel="stylesheet" href="/adminfrequencia/light.css">
   <?php } ?>
 </head>
 <body>
-  <?php if (($theme ?? '')==='light'){ ?>
+  <?php if (($theme ?? '')!=='dark'){ ?>
     <div class="header branded">
       <div class="row">
         <div class="brand-block">
@@ -93,14 +93,21 @@ if ($ano_atual) {
             <div class="user">Usuário: <?php echo htmlspecialchars($user); ?></div>
           </div>
         </div>
-        <span class="badge ok"><?php echo htmlspecialchars($msg); ?></span>
+        <span class="badge ok" style="visibility:hidden">Conectado</span>
       </div>
       <div class="row">
-        <a class="btn-secondary" href="?">Tema escuro</a>
+        <a class="btn-secondary" href="?theme=dark">Tema escuro</a>
       </div>
     </div>
   <?php } else { ?>
     <div class="top"><div>Admin • Turmas</div><div class="muted"><?php echo htmlspecialchars($msg); ?></div></div>
+    <div class="layout">
+      <?php require __DIR__ . '/_sidebar.php'; ?>
+      <div class="content"><div class="row" style="margin:10px 0"><a class="btn" href="?">Tema claro</a></div></div>
+    </div>
+    </body>
+    </html>
+    <?php return; ?>
   <?php } ?>
   <div class="layout">
     <?php require __DIR__ . '/_sidebar.php'; ?>
@@ -125,9 +132,6 @@ if ($ano_atual) {
           <button class="btn" type="button" onclick="openTurmas()">Séries/Turmas</button>
         </div>
       </div>
-      <?php if (($theme ?? '')!=='light'){ ?>
-        <div class="row" style="margin:10px 0"><a class="btn" href="?theme=light">Preview tema claro</a></div>
-      <?php } ?>
       <table>
         <thead><tr><th>Série</th><th>Nome da Turma</th></tr></thead>
         <tbody>
