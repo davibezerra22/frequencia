@@ -158,7 +158,6 @@ $alunos = $stmt->fetchAll();
   <?php $theme = $_GET['theme'] ?? ''; if ($theme!=='dark'){ ?>
     <link rel="stylesheet" href="/adminfrequencia/light.css">
   <?php } ?>
-  <script src="https://unpkg.com/feather-icons"></script>
 </head>
 <body>
   <?php if (($theme ?? '')!=='dark'){ ?>
@@ -174,7 +173,6 @@ $alunos = $stmt->fetchAll();
         </div>
         <span class="badge ok" style="visibility:hidden">Conectado</span>
       </div>
-    </div>
       <div class="row"><a class="btn-secondary" href="?theme=dark">Tema escuro</a></div>
     </div>
   <?php } else { ?>
@@ -231,18 +229,19 @@ $alunos = $stmt->fetchAll();
               <td><?php echo $num; ?></td>
               <td>
                 <div class="row" style="gap:8px;align-items:center">
-                  <?php $photo = (string)$a['foto_aluno']; if ($photo===''){ $photo='https://via.placeholder.com/64x64.png?text=A'; } ?>
-                  <img src="<?php echo htmlspecialchars($photo); ?>" alt="" class="avatar" onerror="this.src='https://via.placeholder.com/64x64.png?text=A'">
+                  <?php $photo = (string)$a['foto_aluno']; if ($photo===''){ $photo='/adminfrequencia/avatar.svg'; } ?>
+                  <img src="<?php echo htmlspecialchars($photo); ?>" alt="" class="avatar" onerror="this.src='/adminfrequencia/avatar.svg'">
                   <span><?php echo htmlspecialchars($a['nome']); ?></span>
                 </div>
               </td>
               <td><?php echo htmlspecialchars($a['matricula']); ?></td>
               <td><?php echo htmlspecialchars((string)$a['turmas']); ?></td>
               <td style="white-space:nowrap">
-                <button class="btn-secondary" type="button" onclick="openEditAluno('<?php echo $a['id']; ?>','<?php echo htmlspecialchars($a['nome']); ?>')"><i data-feather="edit-2"></i></button>
-                <button class="btn-secondary" type="button" onclick="openFotoAluno('<?php echo $a['id']; ?>')"><i data-feather="image"></i></button>
-                <button class="btn-secondary" type="button" onclick="openEnturmarAluno('<?php echo $a['id']; ?>')"><i data-feather="user-plus"></i></button>
-                <button class="btn-secondary" type="button" onclick="openDeleteAluno('<?php echo $a['id']; ?>','<?php echo htmlspecialchars($a['nome']); ?>')"><i data-feather="trash-2"></i></button>
+                <button class="btn-secondary" type="button" onclick="openEditAluno('<?php echo $a['id']; ?>','<?php echo htmlspecialchars($a['nome']); ?>')">Editar</button>
+                <button class="btn-secondary" type="button" onclick="openFotoAluno('<?php echo $a['id']; ?>')">Foto</button>
+                <button class="btn-secondary" type="button" onclick="openEnturmarAluno('<?php echo $a['id']; ?>')">Enturmar</button>
+                <button class="btn-secondary" type="button" onclick="openDeleteAluno('<?php echo $a['id']; ?>','<?php echo htmlspecialchars($a['nome']); ?>')">Excluir</button>
+                <a class="btn-secondary" href="/adminfrequencia/qrcodes.php?mode=aluno&aluno=<?php echo $a['id']; ?>&pdf=1" style="text-decoration:none">Gerar QR</a>
               </td>
             </tr>
           <?php } ?>
@@ -356,7 +355,6 @@ $alunos = $stmt->fetchAll();
     <?php if ($msg){ $type = stripos($msg,'Erro')!==false ? 'err' : 'ok'; ?>
       showToast('<?php echo htmlspecialchars($msg); ?>',{type:'<?php echo $type; ?>',center:true,duration:6000})
     <?php } ?>
-    if (window.feather){ feather.replace() }
   </script>
   </body>
   </html>

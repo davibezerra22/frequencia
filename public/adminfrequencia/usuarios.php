@@ -86,7 +86,6 @@ $users = $users_stmt->fetchAll();
         </div>
         <span class="badge ok" style="visibility:hidden">Conectado</span>
       </div>
-    </div>
       <div class="row"><a class="btn-secondary" href="?theme=dark">Tema escuro</a></div>
     </div>
   <?php } else { ?>

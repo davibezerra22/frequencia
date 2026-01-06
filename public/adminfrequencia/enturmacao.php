@@ -80,7 +80,6 @@ if ($tid > 0) {
   <?php $theme = $_GET['theme'] ?? ($_POST['theme'] ?? ''); if ($theme!=='dark'){ ?>
     <link rel="stylesheet" href="/adminfrequencia/light.css">
   <?php } ?>
-  <script src="https://unpkg.com/feather-icons"></script>
 </head>
 <body>
   <?php if (($theme ?? '')!=='dark'){ ?>
@@ -154,7 +153,7 @@ if ($tid > 0) {
                   </td>
                   <td><?php echo htmlspecialchars($a['matricula']); ?></td>
                   <td style="white-space:nowrap;display:flex;gap:8px">
-                    <button class="btn-secondary" type="button" onclick="openRemoveMatricula('<?php echo $a['id']; ?>','<?php echo $tid; ?>')"><i data-feather="user-minus"></i></button>
+                    <button class="btn-secondary" type="button" onclick="openRemoveMatricula('<?php echo $a['id']; ?>','<?php echo $tid; ?>')">Remover</button>
                   </td>
                 </tr>
               <?php } ?>
@@ -190,7 +189,7 @@ if ($tid > 0) {
                       <input type="hidden" name="aluno_id" value="<?php echo $a['id']; ?>">
                       <input type="hidden" name="turma_id" value="<?php echo $tid; ?>">
                       <?php if (($theme ?? '')==='dark'){ ?><input type="hidden" name="theme" value="dark"><?php } ?>
-                      <button name="act" value="add"><i data-feather="user-plus"></i> Adicionar</button>
+                      <button name="act" value="add">Adicionar</button>
                     </form>
                   </td>
                 </tr>
@@ -210,7 +209,6 @@ if ($tid > 0) {
     <?php if ($msg){ $type = stripos($msg,'Erro')!==false ? 'err' : 'ok'; ?>
       showToast('<?php echo htmlspecialchars($msg); ?>','<?php echo $type; ?>')
     <?php } ?>
-    if (window.feather){ feather.replace() }
   </script>
   <div class="modal-backdrop" id="modalRemoveMatricula">
     <div class="modal">

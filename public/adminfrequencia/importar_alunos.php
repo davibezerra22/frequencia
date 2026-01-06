@@ -3,6 +3,9 @@ require_once __DIR__ . '/_auth.php';
 require_once __DIR__ . '/../../src/Config/Database.php';
 require_once __DIR__ . '/../../src/Database/Connection.php';
 use App\Database\Connection;
+$secret = \App\Support\Env::get('QR_SECRET','dev-secret');
+require_once __DIR__ . '/../../src/Support/ShortCode.php';
+use App\Support\ShortCode;
 $pdo = Connection::get();
 $msg = '';
 $session_escola = $_SESSION['escola_id'] ?? null;
@@ -56,7 +59,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['csv'])) {
             $aluno = $selAluno->fetch();
             if (!$aluno) {
                 $qrcode = sha1($matricula);
-                try { $insAluno->execute([$nome, $matricula, $foto ?: null, $qrcode, $session_escola]); $aluno_id = (int)$pdo->lastInsertId(); $count_novos++; } catch (\Throwable $e) { $count_invalidos++; $erros[] = ['linha'=>$i+1,'nome'=>$nome,'matricula'=>$matricula,'motivo'=>'Erro ao inserir']; continue; }
+                try { 
+                    $insAluno->execute([$nome, $matricula, $foto ?: null, $qrcode, $session_escola]); 
+                    $aluno_id = (int)$pdo->lastInsertId(); 
+                    $curto = ShortCode::makeCode((int)$session_escola, $aluno_id, $secret);
+                    try { $pdo->prepare('UPDATE alunos SET codigo_curto=? WHERE id=?')->execute([$curto, $aluno_id]); } catch (\Throwable $e3) {}
+                    $count_novos++; 
+                } catch (\Throwable $e) { $count_invalidos++; $erros[] = ['linha'=>$i+1,'nome'=>$nome,'matricula'=>$matricula,'motivo'=>'Erro ao inserir']; continue; }
             } else { $aluno_id = (int)$aluno['id']; $count_existentes++; }
             if ($turma_id) {
                 try { $enturmar->execute([$aluno_id, $turma_id]); $count_enturmados++; } catch (\Throwable $e) { $erros[] = ['linha'=>$i+1,'nome'=>$nome,'matricula'=>$matricula,'motivo'=>'Erro ao enturmar']; }
@@ -94,7 +103,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['csv'])) {
         </div>
         <span class="badge ok" style="visibility:hidden">Conectado</span>
       </div>
-    </div>
       <div class="row"><a class="btn-secondary" href="?theme=dark">Tema escuro</a></div>
     </div>
   <?php } else { ?>

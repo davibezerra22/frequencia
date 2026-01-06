@@ -133,16 +133,17 @@ if ($ano_atual) {
         </div>
       </div>
       <table>
-        <thead><tr><th>Série</th><th>Nome da Turma</th></tr></thead>
+        <thead><tr><th>Série</th><th>Nome da Turma</th><th>QR Codes</th></tr></thead>
         <tbody>
           <?php foreach ($turmas as $t){ ?>
             <tr>
               <td><?php echo htmlspecialchars($t['serie_nome']); ?></td>
               <td><?php echo htmlspecialchars($t['nome']); ?></td>
+              <td><a class="btn-secondary" href="/adminfrequencia/qrcodes.php?mode=turma&turma=<?php echo $t['id']; ?>&pdf=1" style="text-decoration:none">Gerar QRs</a></td>
             </tr>
           <?php } ?>
           <?php if (!$turmas){ ?>
-            <tr><td colspan="2" class="muted">Nenhuma turma cadastrada no Ano atual.</td></tr>
+            <tr><td colspan="3" class="muted">Nenhuma turma cadastrada no Ano atual.</td></tr>
           <?php } ?>
         </tbody>
       </table>
