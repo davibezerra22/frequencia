@@ -24,10 +24,13 @@ class ShortCode {
     return $out;
   }
   public static function makeCode(int $escolaId, int $alunoId, string $secret): string {
-    $E = self::b32enc($escolaId);
-    $Araw = self::b32enc($alunoId);
-    $C = $Araw . self::checksum($Araw);
-    $K = self::hmacShort($secret, $E.'|'.$C, 4);
-    return 'QRS1-'.$E.'-'.$C.'-'.$K;
+    // Código curto de 7 caracteres: 1 (escola) + 4 (aluno) + 2 (verificação)
+    $Efull = self::b32enc($escolaId);
+    $E = substr($Efull, -1); // 1 char
+    $Afull = self::b32enc($alunoId);
+    $Abody = substr($Afull, -4); // 4 chars (se menor, tudo)
+    $Abody = str_pad($Abody, 4, '0', STR_PAD_LEFT);
+    $K = self::hmacShort($secret, $E.'|'.$Abody, 2); // 2 chars
+    return $E.$Abody.$K; // total 7 chars
   }
 }

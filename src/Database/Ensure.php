@@ -37,5 +37,20 @@ class Ensure {
         INDEX idx_frequencias_escola_leitura (escola_id, leitura_at)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
     } catch (\Throwable $e) {}
+    // Backfill codigo_curto a partir da matricula
+    try {
+      $stmt = $pdo->query("SELECT id, escola_id, matricula FROM alunos");
+      $rows = $stmt ? $stmt->fetchAll() : [];
+      if ($rows) {
+        $secret = \App\Support\Env::get('QR_SECRET','dev-secret');
+        foreach ($rows as $r) {
+          $id = (int)$r['id']; $eid = (int)$r['escola_id']; $mat = (int)$r['matricula'];
+          if ($mat>0) {
+            $code = \App\Support\ShortCode::makeCode($eid, $mat, $secret);
+            try { $pdo->prepare("UPDATE alunos SET codigo_curto=? WHERE id=?")->execute([$code, $id]); } catch (\Throwable $e) {}
+          }
+        }
+      }
+    } catch (\Throwable $e) {}
   }
 }

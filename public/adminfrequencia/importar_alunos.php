@@ -62,7 +62,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['csv'])) {
                 try { 
                     $insAluno->execute([$nome, $matricula, $foto ?: null, $qrcode, $session_escola]); 
                     $aluno_id = (int)$pdo->lastInsertId(); 
-                    $curto = ShortCode::makeCode((int)$session_escola, $aluno_id, $secret);
+                    $curto = ShortCode::makeCode((int)$session_escola, (int)$matricula, $secret);
                     try { $pdo->prepare('UPDATE alunos SET codigo_curto=? WHERE id=?')->execute([$curto, $aluno_id]); } catch (\Throwable $e3) {}
                     $count_novos++; 
                 } catch (\Throwable $e) { $count_invalidos++; $erros[] = ['linha'=>$i+1,'nome'=>$nome,'matricula'=>$matricula,'motivo'=>'Erro ao inserir']; continue; }
