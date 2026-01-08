@@ -64,11 +64,23 @@ if ($mode==='turma' && $tid>0) {
   <script>
     function ensureQRCodeLib(cb){
       if (window.QRCode) { cb(); return; }
-      var s=document.createElement('script');
-      s.src='https://cdn.jsdelivr.net/gh/davidshimjs/qrcodejs/qrcode.min.js';
-      s.onload=function(){ cb(); };
-      s.onerror=function(){ console.error('Falha ao carregar biblioteca de QR'); };
-      document.head.appendChild(s);
+      var c=document.createElement('script');
+      c.src='https://cdn.jsdelivr.net/gh/davidshimjs/qrcodejs/qrcode.min.js';
+      c.onload=function(){ cb(); };
+      c.onerror=function(){
+        var u=document.createElement('script');
+        u.src='https://unpkg.com/qrcodejs@1.0.0/qrcode.min.js';
+        u.onload=function(){ cb(); };
+        u.onerror=function(){
+          var s=document.createElement('script');
+          s.src='/adminfrequencia/qrcode.min.js';
+          s.onload=function(){ cb(); };
+          s.onerror=function(){ console.error('Falha ao carregar biblioteca de QR'); };
+          document.head.appendChild(s);
+        };
+        document.head.appendChild(u);
+      };
+      document.head.appendChild(c);
     }
   </script>
 </head>
@@ -78,7 +90,7 @@ if ($mode==='turma' && $tid>0) {
       <div class="row">
         <div class="brand-block">
           <?php $logo = $_SESSION['escola_logo'] ?? ''; $nome = $_SESSION['escola_nome'] ?? 'Escola'; $user = $_SESSION['user_name'] ?? 'Usuário'; ?>
-          <img src="<?php echo $logo ?: 'https://via.placeholder.com/56x56.png?text=E'; ?>" alt="">
+          <img src="<?php echo $logo ?: '/adminfrequencia/avatar.svg'; ?>" alt="">
           <div>
             <div class="brand">QR Codes • <?php echo htmlspecialchars($nome); ?></div>
             <div class="user">Usuário: <?php echo htmlspecialchars($user); ?></div>

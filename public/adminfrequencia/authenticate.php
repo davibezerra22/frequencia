@@ -2,13 +2,16 @@
 require_once __DIR__ . '/../../src/Support/Env.php';
 require_once __DIR__ . '/../../src/Config/Database.php';
 require_once __DIR__ . '/../../src/Database/Connection.php';
+require_once __DIR__ . '/../../src/Support/Session.php';
 require_once __DIR__ . '/../../src/Bootstrap.php';
 use App\Database\Connection;
 header('Content-Type: application/json; charset=utf-8');
-session_start();
+App\Support\Session::start();
 $usuario = $_POST['usuario'] ?? '';
 $senha = $_POST['senha'] ?? '';
 try {
+    error_reporting(E_ALL);
+    ini_set('display_errors','1');
     $pdo = Connection::get();
     $sth = $pdo->prepare('SELECT u.id, u.nome, u.senha_hash, u.role, u.status, u.escola_id, e.status AS escola_status, e.nome AS escola_nome, e.logotipo AS escola_logo
                           FROM usuarios u
@@ -40,5 +43,5 @@ try {
     echo json_encode(['status'=>'ok']);
 } catch (\Throwable $e) {
     http_response_code(500);
-    echo json_encode(['status'=>'error','message'=>'Falha no servidor']);
+    echo json_encode(['status'=>'error','message'=>($e->getMessage() ?: 'Falha no servidor')]);
 }

@@ -1,0 +1,8 @@
+:8443 {
+	tls "c:/Users/Suporte/Documents/Desenvolvimento/Frequencia/.https/cert.pem" "c:/Users/Suporte/Documents/Desenvolvimento/Frequencia/.https/key.pem"
+	encode gzip
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+	}
+	reverse_proxy 127.0.0.1:8000
+}
