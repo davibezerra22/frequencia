@@ -1,0 +1,7 @@
+:8443 {
+  tls c:\Users\Suporte\Documents\Desenvolvimento\Frequencia\caddy\certs\site.pem c:\Users\Suporte\Documents\Desenvolvimento\Frequencia\caddy\certs\site-key.pem
+  route /verificar-compatibilidade* {
+    reverse_proxy 127.0.0.1:8787
+  }
+  reverse_proxy 127.0.0.1:8000
+}

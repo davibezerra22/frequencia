@@ -37,6 +37,22 @@ class Ensure {
         INDEX idx_frequencias_escola_leitura (escola_id, leitura_at)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
     } catch (\Throwable $e) {}
+    // Tabela opcional para armazenamento de fotos de leitura
+    try {
+      $pdo->exec("CREATE TABLE IF NOT EXISTS frequencias_fotos (
+        id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+        frequencia_id BIGINT UNSIGNED NULL,
+        escola_id BIGINT UNSIGNED NOT NULL,
+        path VARCHAR(512) NOT NULL,
+        media_type VARCHAR(16) NOT NULL DEFAULT 'frame',
+        width INT NULL,
+        height INT NULL,
+        size_bytes BIGINT UNSIGNED NULL,
+        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_foto_frequencia (frequencia_id),
+        INDEX idx_foto_escola_created (escola_id, created_at)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    } catch (\Throwable $e) {}
     // Backfill codigo_curto a partir da matricula
     try {
       $stmt = $pdo->query("SELECT id, escola_id, matricula FROM alunos");
@@ -50,6 +66,22 @@ class Ensure {
             try { $pdo->prepare("UPDATE alunos SET codigo_curto=? WHERE id=?")->execute([$code, $id]); } catch (\Throwable $e) {}
           }
         }
+      }
+    } catch (\Throwable $e) {}
+    // Coluna opcional compatibilidade em frequencias
+    try {
+      $has = $pdo->query("SHOW COLUMNS FROM frequencias LIKE 'compatibilidade'")->fetch();
+      if (!$has) {
+        $pdo->exec("ALTER TABLE frequencias ADD COLUMN compatibilidade INT NULL");
+      }
+    } catch (\Throwable $e) {
+      // ignora falha; ambiente pode não permitir ALTER
+    }
+    // Coluna face_encoding em alunos para guardar encoding facial
+    try {
+      $hasEnc = $pdo->query("SHOW COLUMNS FROM alunos LIKE 'face_encoding'")->fetch();
+      if (!$hasEnc) {
+        $pdo->exec("ALTER TABLE alunos ADD COLUMN face_encoding TEXT NULL");
       }
     } catch (\Throwable $e) {}
   }

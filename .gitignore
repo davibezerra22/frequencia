@@ -1,24 +1,46 @@
-# Ambiente
-.env
-.trae/
+# OS
+Thumbs.db
+.DS_Store
 
-# Dados locais
-.mysql/
-public/uploads/
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.coverage
 
-# Logs
-*.log
-logs/
+# Virtualenv
+visual_api/.venv/
+venv/
+.venv/
 
-# IDE/Editor
-.vscode/
-.idea/
-
-# Dependências (se usadas futuramente)
+# PHP
+.php/
 vendor/
-node_modules/
+composer.lock
 
-# Arquivos temporários
-*.tmp
-*.swp
-*.DS_Store
+# Node/Front (if any)
+node_modules/
+dist/
+
+# App data
+public/uploads/
+visual_api/certs/
+caddy/certs/
+logs/
+*.log
+
+# Environment
+.env
+.env.*
+env.local
+
+# Keys/Certs
+*.pem
+*.key
+
+# DB/Cache
+.mysql/
+*.sqlite
+

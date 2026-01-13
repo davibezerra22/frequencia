@@ -45,6 +45,16 @@ if (!isset($_SESSION['user_id'])) { header('Location: /leitorfrequencia/login.ph
     .manual{display:flex;gap:8px;margin-top:12px}
     .inp{flex:1;background:#FFFFFF;color:#111827;border:1px solid var(--border);border-radius:8px;padding:8px}
   </style>
+  <script>
+    window.__VISUAL_VALIDATION__ = {
+      enabled: <?php echo json_encode((bool)\App\Support\Env::get('VISUAL_VALIDATION_ENABLED','0')); ?>,
+      url: <?php echo json_encode(\App\Support\Env::get('VISUAL_VALIDATION_URL','http://127.0.0.1:8787/verificar-compatibilidade')); ?>
+    };
+    window.__FRAME_SAVE__ = {
+      enabled: <?php echo json_encode((bool)\App\Support\Env::get('FRAMES_SAVE_ENABLED','0')); ?>,
+      mode: <?php echo json_encode(\App\Support\Env::get('FRAMES_SAVE_MODE','ok_only')); ?>
+    };
+  </script>
 </head>
 <body>
   <div class="layout">
@@ -152,6 +162,84 @@ if (!isset($_SESSION['user_id'])) { header('Location: /leitorfrequencia/login.ph
       document.getElementById('turma').textContent = '';
       var img=document.getElementById('foto');
       img.src='/adminfrequencia/avatar.svg';
+    }
+    async function captureFrame(){
+      var v=document.querySelector('#reader video');
+      if (!v) return null;
+      for (var i=0;i<6;i++){
+        if (v.readyState>=2) break;
+        await new Promise(function(res){ setTimeout(res, 80); });
+      }
+      var track = null;
+      try { track = (v.srcObject && v.srcObject.getVideoTracks) ? v.srcObject.getVideoTracks()[0] : null; } catch(e){}
+      var c=document.createElement('canvas');
+      var vw=v.videoWidth||320, vh=v.videoHeight||240;
+      if (vw<2 || vh<2){ vw=320; vh=240; }
+      var ratio = vw/vh;
+      var cw = 640, ch = Math.round(cw/ratio);
+      c.width=cw; c.height=ch;
+      var x=c.getContext('2d');
+      if (track && window.ImageCapture){
+        try {
+          var ic = new ImageCapture(track);
+          var bmp = await ic.grabFrame();
+          x.drawImage(bmp,0,0,c.width,c.height);
+          return c.toDataURL('image/jpeg',0.75);
+        } catch(e){}
+      }
+      await new Promise(function(res){ requestAnimationFrame(res); });
+      x.drawImage(v,0,0,c.width,c.height);
+      return c.toDataURL('image/jpeg',0.75);
+    }
+    async function getOfficialBase64(url){
+      if (!url) return '';
+      try {
+        var ac = new AbortController();
+        var t = setTimeout(function(){ try { ac.abort(); } catch(e){} }, 2000);
+        var r = await fetch(url, { credentials: 'include', signal: ac.signal });
+        clearTimeout(t);
+        if (!r.ok) return '';
+        var blob = await r.blob();
+        var u = await new Promise(function(res){
+          var fr = new FileReader();
+          fr.onloadend = function(){
+            var s = (typeof fr.result === 'string') ? fr.result : '';
+            var p = s.indexOf(','); res(p>=0 ? s.slice(p+1) : '');
+          };
+          fr.readAsDataURL(blob);
+        });
+        return u || '';
+      } catch(e){ return ''; }
+    }
+    function fetchCompat(alunoId, dataUrl, officialUrl, officialB64){
+      var cfg = window.__VISUAL_VALIDATION__ || {};
+      var u = cfg.url || '';
+      if (!u) return Promise.reject(new Error('url'));
+      var ac = new AbortController();
+      var t = setTimeout(function(){ try { ac.abort(); } catch(e){} }, 1800);
+      return fetch(u, {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ student_id: alunoId, frame_base64: (dataUrl||'').split(',')[1] || '', official_url: officialUrl||'', official_base64: officialB64||'' }),
+        signal: ac.signal
+      }).then(function(r){ clearTimeout(t); return r.json(); }).catch(function(){ clearTimeout(t); return {}; });
+    }
+    function postCompat(alunoId, perc){
+      return fetch('/api/frequencia/compatibilidade.php', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ aluno_id: alunoId, compatibilidade: perc, device_id: deviceId })
+      }).then(function(r){ return r.json(); });
+    }
+    function postFrame(alunoId, status, dataUrl){
+      var cfg = window.__FRAME_SAVE__ || {};
+      if (!cfg.enabled) return Promise.resolve({status:'skip'});
+      var b64 = (dataUrl||'').split(',')[1] || '';
+      return fetch('/api/frequencia/frame.php', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ aluno_id: alunoId, frame_base64: b64, device_id: deviceId, status: status||'' })
+      }).then(function(r){ return r.json(); }).catch(function(){});
     }
     function ensureHtml5(cb){
       if (window.Html5Qrcode){ cb(); return; }
@@ -267,6 +355,38 @@ if (!isset($_SESSION['user_id'])) { header('Location: /leitorfrequencia/login.ph
             sndOk.currentTime=0;
             sndOk.play().catch(function(){ try { new Audio('/leitorfrequencia/beep.php?type=ok').play(); } catch(e){} });
           }
+          try {
+            var cfg = window.__VISUAL_VALIDATION__ || {};
+            var fs = window.__FRAME_SAVE__ || {};
+            var d = await captureFrame();
+            if (d){
+              if (fs.enabled && (fs.mode==='all' || fs.mode==='ok_only')){
+                try {
+                  var rf = await postFrame(j.aluno?.id||0, 'ok', d);
+                  if (rf && rf.status==='ok'){
+                    var m=document.getElementById('mensagem');
+                    m.textContent = (m.textContent ? (m.textContent+' ') : '') + 'Foto armazenada';
+                  }
+                } catch(e){}
+              }
+              if (cfg.enabled && j.aluno && j.aluno.id){
+                var ob64 = await getOfficialBase64(j.aluno?.foto||'').catch(function(){});
+                var r = await fetchCompat(j.aluno.id, d, '', ob64).catch(function(){});
+                if (r && typeof r.compatibilidade === 'number'){
+                  var p = Math.max(0, Math.min(100, r.compatibilidade));
+                  try { await postCompat(j.aluno.id, p); } catch(e){}
+                  var m=document.getElementById('mensagem');
+                  m.textContent = (m.textContent ? (m.textContent+' ') : '') + ('Compatibilidade visual estimada: '+p+'%');
+                  if (fs.enabled && fs.mode==='low_compat_only' && p<45){
+                    try { await postFrame(j.aluno.id, 'ok', d); } catch(e){}
+                  }
+                } else {
+                  var m=document.getElementById('mensagem');
+                  m.textContent = (m.textContent ? (m.textContent+' ') : '') + 'Verificação visual indisponível';
+                }
+              }
+            }
+          } catch(e){}
         } else {
           if (navigator.vibrate) navigator.vibrate([40,40]);
           if (!sndErr) sndErr=document.getElementById('sndErr');
@@ -275,6 +395,19 @@ if (!isset($_SESSION['user_id'])) { header('Location: /leitorfrequencia/login.ph
             sndErr.currentTime=0;
             sndErr.play().catch(function(){ try { new Audio('/leitorfrequencia/beep.php?type=err').play(); } catch(e){} });
           }
+          try {
+            var fs = window.__FRAME_SAVE__ || {};
+            if (fs.enabled && fs.mode==='all' && j.aluno && j.aluno.id){
+              var d = await captureFrame();
+              if (d){ try {
+                var rf = await postFrame(j.aluno.id, j.status||'', d);
+                if (rf && rf.status==='ok'){
+                  var m=document.getElementById('mensagem');
+                  m.textContent = (m.textContent ? (m.textContent+' ') : '') + 'Foto armazenada';
+                }
+              } catch(e){} }
+            }
+          } catch(e){}
         }
       }).catch(async function(){
         setStatus('erro','Falha na API');

@@ -52,6 +52,54 @@ $processFoto = function(int $aluno_id) use ($pdo) {
   }
   $upd = $pdo->prepare('UPDATE alunos SET foto_aluno=? WHERE id=?');
   try { $upd->execute([$webPath, $aluno_id]); } catch (\Throwable $e) {}
+  // Gerar encoding facial automaticamente
+  try {
+  $api = 'http://127.0.0.1:8787/gerar-encoding';
+    $b64 = null;
+    if (is_file($dest)) {
+      $data = @file_get_contents($dest);
+      if ($data!==false) { $b64 = base64_encode($data); }
+    }
+    $payload = json_encode($b64 ? ['image_base64' => $b64, 'student_id' => $aluno_id] : ['image_url' => $webPath, 'student_id' => $aluno_id], JSON_UNESCAPED_SLASHES);
+  $resp = null; $code = null;
+  if (function_exists('curl_init')) {
+    $ch = curl_init($api);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 5);
+    $resp = curl_exec($ch);
+    $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+  } else {
+    $context = stream_context_create([
+      'http' => [
+        'method' => 'POST',
+        'header' => "Content-Type: application/json\r\n",
+        'content' => $payload,
+        'timeout' => 5
+      ]
+    ]);
+    $resp = @file_get_contents($api, false, $context);
+    $code = null;
+    if (isset($http_response_header[0])) {
+      if (preg_match('#HTTP/\\S+\\s+(\\d+)#',$http_response_header[0],$m)) { $code = (int)$m[1]; }
+    }
+  }
+  try {
+    $logDir = __DIR__ . '/logs';
+    if (!is_dir($logDir)) @mkdir($logDir, 0775, true);
+    @file_put_contents($logDir.'/encode.log', date('c')." aluno={$aluno_id} http={$code} resp=".substr((string)$resp,0,600)."\n", FILE_APPEND);
+  } catch (\Throwable $e) {}
+  if ($resp && $code===200) {
+    $obj = json_decode($resp, true);
+    if (is_array($obj) && ($obj['status'] ?? '')==='ok' && isset($obj['encoding']) && is_array($obj['encoding'])) {
+      $encJson = json_encode($obj['encoding']);
+      try { $pdo->prepare('UPDATE alunos SET face_encoding=? WHERE id=?')->execute([$encJson, $aluno_id]); } catch (\Throwable $e) {}
+      }
+    }
+  } catch (\Throwable $e) {}
 };
 $session_escola = $_SESSION['escola_id'] ?? null;
 $view_escola = $session_escola ?: (int)($_GET['escola'] ?? 0) ?: null;

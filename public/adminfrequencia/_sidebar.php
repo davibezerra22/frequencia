@@ -25,6 +25,7 @@ try {
     <a href="/adminfrequencia/enturmacao.php">Enturmação</a>
     <a href="/adminfrequencia/alunos.php">Alunos</a>
     <a href="/adminfrequencia/importar_alunos.php">Importar Alunos</a>
+    <a href="/adminfrequencia/relatorio_frequencias.php">Relatório de Frequências</a>
     <?php if ((($_SESSION['user_role'] ?? '') === 'admin') && (!isset($_SESSION['escola_id']) || $_SESSION['escola_id']===null)){ ?>
       <a href="/adminfrequencia/db.php">Banco (read-only)</a>
     <?php } ?>
